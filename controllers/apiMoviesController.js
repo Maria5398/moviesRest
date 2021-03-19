@@ -26,7 +26,7 @@ module.exports = {
     },
     getById : (req,res) => {
         if(req.params.id % 1 !== 0){               
-            return res.status(400),json({
+            return res.status(400).json({
                 status: 400,
                 msg: 'ruta no reconocida'
             }) 
@@ -63,8 +63,41 @@ module.exports = {
             length
         })
         .then(result =>{
+            console.log(result)
             res.send(result)
         })
+        .catch(error =>{
+            console.log(error)
+            switch (error.name) {
+                case "SequelizeValidationError":
+                    let erroresMsg = [];
+                    let erroresNotNull = [];
+                    let erroresValidation = [];
+                    error.errors.forEach(error => {
+                        erroresMsg.push(error.message)
+                        if (error.type == "notNull Violation") {
+                            erroresNotNull.push(error.message)
+                        }
+                        if (error.type == "Validation error") {
+                            erroresValidation.push(error.message)
+                        }
+                    });
+                    let response = {
+                        status: 400,
+                        messages: "datos faltantes o erróneos",
+                        errores: {
+                            cantidad: erroresMsg.length,
+                            msg: erroresMsg,
+                            notNull: erroresNotNull,
+                            validation: erroresValidation
+                        }
+                    }
+                    return res.status(400).json(error)
+                    default:
+                        return res.status(500).json({error})
+                }
+        })
+
     }
 
 }
